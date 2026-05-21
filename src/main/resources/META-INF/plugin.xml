@@ -25,9 +25,13 @@
     <postFormatProcessor
       implementation="de.ljunker.kasm.intellij.KasmPostFormatProcessor"/>
   </extensions>
-  <id>de.ljunker.kasm.intellij</id>
+  <description><![CDATA[
+  Formatting, highlighting and code completion for <a href="https://github.com/ljunker/Kasm">KASM</a>
+  ]]>
+  </description>
 
   <name>KASM Language</name>
 
   <vendor>Lars Junker</vendor>
+  <id>de.ljunker.kasm</id>
 </idea-plugin>
