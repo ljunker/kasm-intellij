@@ -24,6 +24,8 @@
       language="KASM"/>
     <postFormatProcessor
       implementation="de.ljunker.kasm.intellij.KasmPostFormatProcessor"/>
+    <configurationType
+      implementation="de.ljunker.kasm.intellij.KasmRunConfigurationType"/>
   </extensions>
   <description><![CDATA[
   Formatting, highlighting and code completion for <a href="https://github.com/ljunker/Kasm">KASM</a>
