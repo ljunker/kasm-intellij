@@ -1,0 +1,33 @@
+<idea-plugin>
+  <depends>com.intellij.modules.lang</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.parameterInfo
+      implementationClass="de.ljunker.kasm.intellij.KasmParameterInfoHandler"
+      language="KASM"/>
+    <completion.contributor
+      implementationClass="de.ljunker.kasm.intellij.KasmCompletionContributor"
+      language="KASM"/>
+    <fileType
+      extensions="kasm"
+      fieldName="INSTANCE"
+      implementationClass="de.ljunker.kasm.intellij.KasmFileType"
+      language="KASM"
+      name="KASM"/>
+    <lang.formatter
+      implementationClass="de.ljunker.kasm.intellij.KasmFormattingModelBuilder"
+      language="KASM"/>
+    <lang.parserDefinition
+      implementationClass="de.ljunker.kasm.intellij.KasmParserDefinition"
+      language="KASM"/>
+    <lang.syntaxHighlighterFactory
+      implementationClass="de.ljunker.kasm.intellij.KasmSyntaxHighlighterFactory"
+      language="KASM"/>
+    <postFormatProcessor
+      implementation="de.ljunker.kasm.intellij.KasmPostFormatProcessor"/>
+  </extensions>
+  <id>de.ljunker.kasm.intellij</id>
+
+  <name>KASM Language</name>
+
+  <vendor>Lars Junker</vendor>
+</idea-plugin>
