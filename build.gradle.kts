@@ -35,7 +35,7 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Initial version
+            Can run "Current File" by generating a run configuration for .kasm files.
         """.trimIndent()
     }
 

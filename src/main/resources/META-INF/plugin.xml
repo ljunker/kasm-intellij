@@ -26,6 +26,8 @@
       implementation="de.ljunker.kasm.intellij.KasmPostFormatProcessor"/>
     <configurationType
       implementation="de.ljunker.kasm.intellij.KasmRunConfigurationType"/>
+    <runConfigurationProducer
+      implementation="de.ljunker.kasm.intellij.KasmRunConfigurationProducer"/>
   </extensions>
   <description><![CDATA[
   Formatting, highlighting and code completion for <a href="https://github.com/ljunker/Kasm">KASM</a>
