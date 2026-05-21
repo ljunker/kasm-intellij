@@ -38,6 +38,16 @@ intellijPlatform {
             Initial version
         """.trimIndent()
     }
+
+    signing {
+        certificateChain = providers.gradleProperty("certificateChain")
+        privateKey = providers.gradleProperty("privateKey")
+        password = providers.gradleProperty("privateKeyPassword")
+    }
+
+    publishing {
+        token = providers.gradleProperty("intellijPlatformPublishingToken")
+    }
 }
 
 tasks {

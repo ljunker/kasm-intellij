@@ -76,7 +76,7 @@ jobs:
           fi
 
       - name: Publish to JetBrains Marketplace
-        run: ./gradlew publishPlugin
+        run: ./gradlew publishPlugin -PintellijPlatformPublishingToken=${{ env.PUBLISH_TOKEN }} -PcertificateChain=${{CERTIFICATE_CHAIN}} -PprivateKey=${{PRIVATE_KEY}} -PprivateKeyPassword=${{PRIVATE_KEY_PASSWORD}}
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
