@@ -1,34 +1,45 @@
 package de.ljunker.kasm.intellij
 
-data class KasmInstructionForm(
-    val mnemonic: String,
+data class KasmStatementForm(
+    val name: String,
     val operands: List<KasmOperandType>,
-    val effect: String
+    val effect: String,
+    val variadic: Boolean = false
 ) {
-    val signature: String =
-        if (operands.isEmpty()) {
-            mnemonic
-        } else {
-            "$mnemonic ${operands.joinToString(", ") { it.displayName }}"
-        }
-
     val operandSummary: String =
         if (operands.isEmpty()) {
             "none"
         } else {
-            operands.joinToString(", ") { it.displayName }
+            buildString {
+                append(operands.joinToString(", ") { it.displayName })
+                if (variadic) {
+                    append(", ...")
+                }
+            }
+        }
+
+    val signature: String =
+        if (operands.isEmpty()) {
+            name
+        } else {
+            "$name ${operandSummary}"
         }
 
     fun operandRange(index: Int): IntRange? {
-        if (index !in operands.indices) {
+        val operandIndex = when {
+            index in operands.indices -> index
+            variadic && operands.isNotEmpty() -> operands.lastIndex
+            else -> return null
+        }
+        if (operandIndex !in operands.indices) {
             return null
         }
 
-        var start = mnemonic.length + 1
-        operands.take(index).forEach { operand ->
+        var start = name.length + 1
+        operands.take(operandIndex).forEach { operand ->
             start += operand.displayName.length + OPERAND_SEPARATOR.length
         }
-        return start until start + operands[index].displayName.length
+        return start until start + operands[operandIndex].displayName.length
     }
 
     companion object {
@@ -36,11 +47,16 @@ data class KasmInstructionForm(
     }
 }
 
+typealias KasmInstructionForm = KasmStatementForm
+
 enum class KasmOperandType(val displayName: String) {
     REGISTER("register"),
     BYTE_VALUE("byte-value"),
     JUMP_TARGET("jump-target"),
-    MEMORY_ADDRESS("memory-address")
+    MEMORY_ADDRESS("memory-address"),
+    SYMBOL("symbol"),
+    EXPRESSION("expr"),
+    STRING("string")
 }
 
 object KasmLanguageReference {
@@ -53,16 +69,16 @@ object KasmLanguageReference {
             "Copy one register into another register."
         },
         instruction("ADD", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
-            "Add the source register to the target register."
+            "Add into the target register with an 8-bit wrapped result."
         },
         instruction("SUB", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
-            "Subtract the source register from the target register."
+            "Subtract into the target register with an 8-bit wrapped result."
         },
         instruction("INC", KasmOperandType.REGISTER) {
-            "Increment one register."
+            "Increment one register with an 8-bit wrapped result."
         },
         instruction("DEC", KasmOperandType.REGISTER) {
-            "Decrement one register."
+            "Decrement one register with an 8-bit wrapped result."
         },
         instruction("CMP", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Compare two registers by updating result flags."
@@ -83,10 +99,10 @@ object KasmLanguageReference {
             "Jump when the Zero flag is clear."
         },
         instruction("JG", KasmOperandType.JUMP_TARGET) {
-            "Jump when the last flagged result was greater than zero."
+            "Signed jump when the last flagged result was greater than zero."
         },
         instruction("JL", KasmOperandType.JUMP_TARGET) {
-            "Jump when the last flagged result was less than zero."
+            "Signed jump when the last flagged result was less than zero."
         },
         instruction("LOAD", KasmOperandType.REGISTER, KasmOperandType.MEMORY_ADDRESS) {
             "Load one data-memory cell into a register."
@@ -114,19 +130,53 @@ object KasmLanguageReference {
         }
     )
 
+    val directiveForms = listOf(
+        directive(".equ", KasmOperandType.SYMBOL, KasmOperandType.EXPRESSION) {
+            "Define a symbol whose value is computed from an expression."
+        },
+        directive(".org", KasmOperandType.EXPRESSION) {
+            "Move the data-memory layout cursor."
+        },
+        directive(".byte", KasmOperandType.EXPRESSION, variadic = true) {
+            "Initialize one data-memory cell per byte expression."
+        },
+        directive(".ascii", KasmOperandType.STRING) {
+            "Initialize ASCII bytes without a terminator."
+        },
+        directive(".string", KasmOperandType.STRING) {
+            "Initialize ASCII bytes followed by one zero byte."
+        }
+    )
+
     val registers = listOf("R0", "R1", "R2", "R3")
 
     val instructionNames: List<String> = instructionForms
-        .map { it.mnemonic }
+        .map { it.name }
         .distinct()
 
-    private val formsByMnemonic = instructionForms.groupBy { it.mnemonic }
+    val directiveNames: List<String> = directiveForms
+        .map { it.name }
+        .distinct()
+
+    private val instructionFormsByName = instructionForms.groupBy { it.name.uppercase() }
+    private val directiveFormsByName = directiveForms.groupBy { it.name.uppercase() }
+    private val statementFormsByName = (instructionForms + directiveForms)
+        .groupBy { it.name.uppercase() }
 
     fun formsFor(mnemonic: String): List<KasmInstructionForm> =
-        formsByMnemonic[mnemonic.uppercase()].orEmpty()
+        instructionFormsByName[mnemonic.uppercase()].orEmpty()
+
+    fun directiveFormsFor(name: String): List<KasmStatementForm> =
+        directiveFormsByName[name.uppercase()].orEmpty()
+
+    fun statementFormsFor(name: String): List<KasmStatementForm> =
+        statementFormsByName[name.uppercase()].orEmpty()
 
     fun isInstruction(value: String): Boolean =
-        value.uppercase() in formsByMnemonic
+        value.uppercase() in instructionFormsByName
+
+    fun isDirective(value: String): Boolean =
+        value.uppercase() in directiveFormsByName
 
     fun isRegister(value: String): Boolean =
         registers.any { it.equals(value, ignoreCase = true) }
@@ -137,4 +187,12 @@ object KasmLanguageReference {
         effect: () -> String
     ): KasmInstructionForm =
         KasmInstructionForm(mnemonic, operands.toList(), effect())
+
+    private fun directive(
+        name: String,
+        vararg operands: KasmOperandType,
+        variadic: Boolean = false,
+        effect: () -> String
+    ): KasmStatementForm =
+        KasmStatementForm(name, operands.toList(), effect(), variadic)
 }

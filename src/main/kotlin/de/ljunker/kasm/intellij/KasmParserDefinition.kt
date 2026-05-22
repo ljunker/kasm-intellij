@@ -31,7 +31,7 @@ class KasmParserDefinition : ParserDefinition {
 
     override fun getCommentTokens(): TokenSet = TokenSet.create(KasmTokenTypes.COMMENT)
 
-    override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
+    override fun getStringLiteralElements(): TokenSet = TokenSet.create(KasmTokenTypes.STRING)
 
     override fun createElement(node: ASTNode): PsiElement = ASTWrapperPsiElement(node)
 

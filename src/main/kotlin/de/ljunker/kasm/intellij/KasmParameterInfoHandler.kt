@@ -6,11 +6,11 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.psi.PsiElement
 
-class KasmParameterInfoHandler : ParameterInfoHandler<PsiElement, KasmInstructionForm> {
+class KasmParameterInfoHandler : ParameterInfoHandler<PsiElement, KasmStatementForm> {
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): PsiElement? {
         val call = KasmInstructionCallFinder.find(context.file.text, context.offset)
             ?: return null
-        val forms = KasmLanguageReference.formsFor(call.mnemonic)
+        val forms = KasmLanguageReference.statementFormsFor(call.mnemonic)
         if (forms.isEmpty()) {
             return null
         }
@@ -41,7 +41,7 @@ class KasmParameterInfoHandler : ParameterInfoHandler<PsiElement, KasmInstructio
         context.setCurrentParameter(call.operandIndex)
     }
 
-    override fun updateUI(parameter: KasmInstructionForm, context: ParameterInfoUIContext) {
+    override fun updateUI(parameter: KasmStatementForm, context: ParameterInfoUIContext) {
         val range = parameter.operandRange(context.currentParameterIndex)
         val presentation = "${parameter.signature}    ${parameter.effect}"
 
@@ -85,30 +85,48 @@ internal object KasmInstructionCallFinder {
             offset = skipIndent(text, labelEnd + 1, codeEnd)
         }
 
-        val mnemonicEnd = identifierEnd(text, offset, codeEnd)
+        val mnemonicEnd = statementNameEnd(text, offset, codeEnd)
         if (mnemonicEnd == offset) {
             return null
         }
 
         val mnemonic = text.substring(offset, mnemonicEnd)
-        val forms = KasmLanguageReference.formsFor(mnemonic)
+        val forms = KasmLanguageReference.statementFormsFor(mnemonic)
         if (forms.isEmpty()) {
             return null
         }
 
         return KasmInstructionCall(
-            mnemonic = forms.first().mnemonic,
+            mnemonic = forms.first().name,
             mnemonicStart = offset,
             operandIndex = operandIndex(text, mnemonicEnd, codeEnd, forms)
         )
     }
 
     private fun codeEnd(text: String, lineStart: Int, caret: Int): Int? {
-        val comment = text.indexOf(';', startIndex = lineStart)
+        val comment = commentOffset(text, lineStart, caret)
         if (comment >= 0 && comment < caret && commentBeforeLineEnd(text, comment, caret)) {
             return null
         }
         return caret
+    }
+
+    private fun commentOffset(text: String, lineStart: Int, caret: Int): Int {
+        var inString = false
+        var escaped = false
+
+        for (offset in lineStart until caret) {
+            val char = text[offset]
+            when {
+                char.isLineBreak() -> return -1
+                escaped -> escaped = false
+                inString && char == '\\' -> escaped = true
+                char == '"' -> inString = !inString
+                char == ';' && !inString -> return offset
+            }
+        }
+
+        return -1
     }
 
     private fun commentBeforeLineEnd(text: String, comment: Int, caret: Int): Boolean {
@@ -131,9 +149,16 @@ internal object KasmInstructionCallFinder {
         }
 
         var index = 0
+        var inString = false
+        var escaped = false
+
         for (offset in mnemonicEnd until codeEnd) {
-            if (text[offset] == ',') {
-                index++
+            val char = text[offset]
+            when {
+                escaped -> escaped = false
+                inString && char == '\\' -> escaped = true
+                char == '"' -> inString = !inString
+                char == ',' && !inString -> index++
             }
         }
         return index
@@ -165,6 +190,15 @@ internal object KasmInstructionCallFinder {
             offset++
         }
         return offset
+    }
+
+    private fun statementNameEnd(text: String, start: Int, end: Int): Int {
+        if (start < end && text[start] == '.') {
+            val directiveEnd = identifierEnd(text, start + 1, end)
+            return if (directiveEnd == start + 1) start else directiveEnd
+        }
+
+        return identifierEnd(text, start, end)
     }
 
     private fun Char.isIdentifierStart(): Boolean =

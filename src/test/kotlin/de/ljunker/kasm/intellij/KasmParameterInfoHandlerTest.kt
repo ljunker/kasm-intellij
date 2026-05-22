@@ -24,4 +24,25 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
             "MOV register, register"
         )
     }
+
+    fun testFindsDirectiveOperandsAndIgnoresStringCommas() {
+        val byteSource = "data: .byte 1, buffer + 1"
+        val byteCall = KasmInstructionCallFinder.find(byteSource, byteSource.length)
+        val stringSource = ".ascii \"a,b\""
+        val stringCall = KasmInstructionCallFinder.find(stringSource, stringSource.length)
+
+        assertNotNull(byteCall)
+        assertEquals(".byte", byteCall!!.mnemonic)
+        assertEquals(1, byteCall.operandIndex)
+        assertNotNull(stringCall)
+        assertEquals(".ascii", stringCall!!.mnemonic)
+        assertEquals(0, stringCall.operandIndex)
+    }
+
+    fun testReferenceContainsDataDirectiveForms() {
+        val signatures = KasmLanguageReference.directiveFormsFor(".byte")
+            .map { it.signature }
+
+        assertSameElements(signatures, ".byte expr, ...")
+    }
 }

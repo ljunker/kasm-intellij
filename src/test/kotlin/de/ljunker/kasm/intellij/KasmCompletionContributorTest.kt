@@ -18,6 +18,25 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
             .map { it.lookupString }
 
         assertSame(KasmLanguage, myFixture.file.language)
-        assertContainsElements(completions, "MOV", "JNZ", "LOAD", "RET", "R0")
+        assertContainsElements(
+            completions,
+            "MOV",
+            "JNZ",
+            "LOAD",
+            "RET",
+            ".equ",
+            ".byte",
+            ".string",
+            "R0"
+        )
+    }
+
+    fun testCompletesDirectivePrefixInKasmFile() {
+        myFixture.configureByText(KasmFileType, ".st<caret>")
+
+        val completions = myFixture.completeBasic()
+            .map { it.lookupString }
+
+        assertContainsElements(completions, ".string")
     }
 }

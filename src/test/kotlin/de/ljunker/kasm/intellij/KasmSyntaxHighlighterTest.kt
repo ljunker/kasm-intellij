@@ -7,20 +7,27 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
     fun testLexesReferenceTokensForHighlighting() {
         val tokenTypes = lex(
             """
+            |.equ START_VALUE, (0x20 + 1)
             |loop:
             |LOAD R1, [0x28] ; direct memory
+            |message: .string "count; down"
             |JNZ R1, loop
             """.trimMargin()
         )
 
         assertContainsElements(
             tokenTypes,
+            KasmTokenTypes.DIRECTIVE,
             KasmTokenTypes.LABEL,
             KasmTokenTypes.INSTRUCTION,
             KasmTokenTypes.REGISTER,
             KasmTokenTypes.NUMBER,
+            KasmTokenTypes.STRING,
             KasmTokenTypes.LEFT_BRACKET,
             KasmTokenTypes.RIGHT_BRACKET,
+            KasmTokenTypes.LEFT_PARENTHESIS,
+            KasmTokenTypes.RIGHT_PARENTHESIS,
+            KasmTokenTypes.OPERATOR,
             KasmTokenTypes.COMMENT
         )
     }
@@ -31,6 +38,19 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
             .map { it.externalName }
 
         assertContainsElements(keys, "KASM_INSTRUCTION")
+    }
+
+    fun testMapsDirectiveAndStringTokensToHighlighterAttributes() {
+        val highlighter = KasmSyntaxHighlighter()
+        val directiveKeys = highlighter
+            .getTokenHighlights(KasmTokenTypes.DIRECTIVE)
+            .map { it.externalName }
+        val stringKeys = highlighter
+            .getTokenHighlights(KasmTokenTypes.STRING)
+            .map { it.externalName }
+
+        assertContainsElements(directiveKeys, "KASM_DIRECTIVE")
+        assertContainsElements(stringKeys, "KASM_STRING")
     }
 
     private fun lex(source: String): List<IElementType> {

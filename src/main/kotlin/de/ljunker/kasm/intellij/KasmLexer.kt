@@ -54,6 +54,17 @@ class KasmLexer : LexerBase() {
                 KasmTokenTypes.COMMENT
             }
 
+            char == '"' -> {
+                tokenEnd = stringEnd(tokenStart)
+                KasmTokenTypes.STRING
+            }
+
+            char == '.' && tokenStart + 1 < bufferEnd &&
+                    isIdentifierStart(buffer[tokenStart + 1]) -> {
+                tokenEnd = consumeWhile(tokenStart + 1, ::isIdentifierPart)
+                directiveTokenType()
+            }
+
             isIdentifierStart(char) -> {
                 tokenEnd = consumeWhile(tokenStart, ::isIdentifierPart)
                 identifierTokenType()
@@ -84,6 +95,21 @@ class KasmLexer : LexerBase() {
                 KasmTokenTypes.RIGHT_BRACKET
             }
 
+            char == '(' -> {
+                tokenEnd = tokenStart + 1
+                KasmTokenTypes.LEFT_PARENTHESIS
+            }
+
+            char == ')' -> {
+                tokenEnd = tokenStart + 1
+                KasmTokenTypes.RIGHT_PARENTHESIS
+            }
+
+            char == '+' || char == '-' -> {
+                tokenEnd = tokenStart + 1
+                KasmTokenTypes.OPERATOR
+            }
+
             else -> {
                 tokenEnd = tokenStart + 1
                 KasmTokenTypes.OTHER
@@ -105,6 +131,33 @@ class KasmLexer : LexerBase() {
     private fun isIdentifierPart(char: Char): Boolean =
         isIdentifierStart(char) || char in '0'..'9'
 
+    private fun stringEnd(start: Int): Int {
+        var offset = start + 1
+        var escaped = false
+
+        while (offset < bufferEnd) {
+            val char = buffer[offset]
+            when {
+                char.isLineBreak() -> return offset
+                escaped -> escaped = false
+                char == '\\' -> escaped = true
+                char == '"' -> return offset + 1
+            }
+            offset++
+        }
+
+        return offset
+    }
+
+    private fun directiveTokenType(): IElementType {
+        val value = buffer.subSequence(tokenStart, tokenEnd).toString()
+        return if (KasmLanguageReference.isDirective(value)) {
+            KasmTokenTypes.DIRECTIVE
+        } else {
+            KasmTokenTypes.OTHER
+        }
+    }
+
     private fun identifierTokenType(): IElementType {
         val value = buffer.subSequence(tokenStart, tokenEnd).toString()
 
@@ -115,4 +168,6 @@ class KasmLexer : LexerBase() {
             else -> KasmTokenTypes.IDENTIFIER
         }
     }
+
+    private fun Char.isLineBreak(): Boolean = this == '\n' || this == '\r'
 }

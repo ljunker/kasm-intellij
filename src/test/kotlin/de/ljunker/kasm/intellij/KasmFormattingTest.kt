@@ -34,4 +34,32 @@ class KasmFormattingTest : BasePlatformTestCase() {
             myFixture.editor.document.text
         )
     }
+
+    fun testKeepsDataLabelsAtFileIndentAndIndentsDirectives() {
+        myFixture.configureByText(
+            KasmFileType,
+            """
+            |.equ COUNT, 3
+            |  .org 40
+            |    buffer:
+            |.byte COUNT, COUNT + 1
+            | .string "ok"
+            """.trimMargin()
+        )
+
+        WriteCommandAction.runWriteCommandAction(project) {
+            CodeStyleManager.getInstance(project).reformat(myFixture.file)
+        }
+
+        assertEquals(
+            """
+            |    .equ COUNT, 3
+            |    .org 40
+            |buffer:
+            |    .byte COUNT, COUNT + 1
+            |    .string "ok"
+            """.trimMargin(),
+            myFixture.editor.document.text
+        )
+    }
 }

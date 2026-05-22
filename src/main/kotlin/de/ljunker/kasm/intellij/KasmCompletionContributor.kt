@@ -20,20 +20,12 @@ class KasmCompletionContributor : CompletionContributor() {
                 ) {
                     KasmLanguageReference.instructionNames.forEach { mnemonic ->
                         val forms = KasmLanguageReference.formsFor(mnemonic)
-                        val hasOperands = forms.any { it.operands.isNotEmpty() }
-                        val usage = forms.joinToString(" | ") { it.operandSummary }
-                        val effects = forms
-                            .map { it.effect }
-                            .distinct()
-                            .joinToString(" / ")
+                        result.addElement(statementLookup(mnemonic, forms))
+                    }
 
-                        result.addElement(
-                            LookupElementBuilder.create(mnemonic)
-                                .withCaseSensitivity(false)
-                                .withTailText(" $usage", true)
-                                .withTypeText(effects, true)
-                                .withInsertHandler(KasmInstructionInsertHandler(hasOperands))
-                        )
+                    KasmLanguageReference.directiveNames.forEach { directive ->
+                        val forms = KasmLanguageReference.directiveFormsFor(directive)
+                        result.addElement(statementLookup(directive, forms))
                     }
 
                     KasmLanguageReference.registers.forEach {
@@ -48,10 +40,44 @@ class KasmCompletionContributor : CompletionContributor() {
     }
 }
 
-private class KasmInstructionInsertHandler(
-    private val hasOperands: Boolean
+private fun statementLookup(
+    name: String,
+    forms: List<KasmStatementForm>
+): LookupElement {
+    val hasOperands = forms.any { it.operands.isNotEmpty() }
+    val usage = forms.joinToString(" | ") { it.operandSummary }
+    val effects = forms
+        .map { it.effect }
+        .distinct()
+        .joinToString(" / ")
+
+    var lookup = LookupElementBuilder.create(name)
+        .withCaseSensitivity(false)
+        .withTailText(" $usage", true)
+        .withTypeText(effects, true)
+        .withInsertHandler(
+            KasmStatementInsertHandler(
+                hasOperands = hasOperands,
+                isDirective = name.startsWith(".")
+            )
+        )
+
+    if (name.startsWith(".")) {
+        lookup = lookup.withLookupString(name.removePrefix("."))
+    }
+
+    return lookup
+}
+
+private class KasmStatementInsertHandler(
+    private val hasOperands: Boolean,
+    private val isDirective: Boolean
 ) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        if (isDirective) {
+            removeDuplicateDirectiveDot(context)
+        }
+
         if (!hasOperands) {
             return
         }
@@ -59,6 +85,19 @@ private class KasmInstructionInsertHandler(
         context.setLaterRunnable {
             AutoPopupController.getInstance(context.project)
                 .autoPopupParameterInfo(context.editor, context.file)
+        }
+    }
+
+    private fun removeDuplicateDirectiveDot(context: InsertionContext) {
+        val insertedStart = context.startOffset
+        val document = context.document
+        if (insertedStart == 0 || insertedStart >= document.textLength) {
+            return
+        }
+
+        val text = document.charsSequence
+        if (text[insertedStart - 1] == '.' && text[insertedStart] == '.') {
+            document.deleteString(insertedStart - 1, insertedStart)
         }
     }
 }

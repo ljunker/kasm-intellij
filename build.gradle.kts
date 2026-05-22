@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.3.20"
-    id("org.jetbrains.intellij.platform") version "2.10.2"
+    id("org.jetbrains.intellij.platform") version "2.16.0"
 }
 
 group = "de.ljunker"
@@ -43,7 +43,7 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Source-level KASM debug sessions with breakpoints, stepping and VM state views.
+            New Version of KASM
         """.trimIndent()
     }
 
