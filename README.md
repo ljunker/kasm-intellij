@@ -12,6 +12,7 @@ support for writing KASM programs in IntelliJ-based IDEs.
 - Code completion for KASM instructions and registers
 - Instruction signature help based on the KASM language reference
 - Formatting with labels at column zero and instructions indented by one level
+- KASM run configurations and source-level debugger sessions
 
 ## Example
 
@@ -31,9 +32,10 @@ loop:
 
 Install the plugin from JetBrains Marketplace once it is published there.
 
-For a local build:
+For a local build, build the KASM library from the sibling KASM checkout first:
 
 ```shell
+../Kasm/gradlew jar
 ./gradlew buildPlugin
 ```
 
@@ -46,9 +48,11 @@ Then install the ZIP from `build/distributions/` in IntelliJ:
 
 ## Development
 
-Run tests and build the distributable plugin ZIP:
+The debugger bundles the KASM library from the sibling `../Kasm` checkout by default. Build that jar before running
+the plugin build:
 
 ```shell
+../Kasm/gradlew jar
 ./gradlew check buildPlugin
 ```
 
@@ -60,6 +64,18 @@ Start a development IDE with the plugin loaded:
 
 The plugin implementation lives in `src/main/kotlin/de/ljunker/kasm/intellij/`. The IntelliJ extension registrations
 are defined in `src/main/resources/META-INF/plugin.xml`.
+
+## Debugging
+
+The plugin uses the headless KASM debug session API for source-level IntelliJ debugger sessions.
+
+1. Open or select a `.kasm` file.
+2. Create or reuse the generated KASM run configuration for that file.
+3. Set breakpoints on executable KASM instruction lines.
+4. Start the configuration with the IntelliJ Debug action.
+
+The debug tool window stops at KASM source locations, supports resume and stepping, shows registers, flags, stack
+values, and non-zero data memory, and prints KASM program output in the debug console.
 
 ## Publishing
 

@@ -21,6 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout KASM
+        uses: actions/checkout@v4
+        with:
+          repository: ljunker/Kasm
+          path: Kasm
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -30,8 +36,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Build KASM library
+        working-directory: Kasm
+        run: ./gradlew jar
+
       - name: Check and package
-        run: ./gradlew check buildPlugin
+        run: ./gradlew check buildPlugin -PkasmProjectDir=Kasm
 
       - name: Upload distribution
         uses: actions/upload-artifact@v4
@@ -50,6 +60,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout KASM
+        uses: actions/checkout@v4
+        with:
+          repository: ljunker/Kasm
+          path: Kasm
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -58,6 +74,10 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Build KASM library
+        working-directory: Kasm
+        run: ./gradlew jar
 
       - name: Check tag version
         shell: bash
@@ -76,7 +96,7 @@ jobs:
           fi
 
       - name: Publish to JetBrains Marketplace
-        run: ./gradlew publishPlugin -PintellijPlatformPublishingToken="${{ env.PUBLISH_TOKEN }}" -PcertificateChain="${{env.CERTIFICATE_CHAIN}}" -PprivateKey="${{env.PRIVATE_KEY}}" -PprivateKeyPassword="${{env.PRIVATE_KEY_PASSWORD}}"
+        run: ./gradlew publishPlugin -PkasmProjectDir=Kasm -PintellijPlatformPublishingToken="${{ env.PUBLISH_TOKEN }}" -PcertificateChain="${{env.CERTIFICATE_CHAIN}}" -PprivateKey="${{env.PRIVATE_KEY}}" -PprivateKeyPassword="${{env.PRIVATE_KEY_PASSWORD}}"
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}

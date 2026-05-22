@@ -1,5 +1,9 @@
 <idea-plugin>
   <depends>com.intellij.modules.lang</depends>
+  <description><![CDATA[
+  Formatting, highlighting, code completion and source debugging for <a href="https://github.com/ljunker/Kasm">KASM</a>
+  ]]>
+  </description>
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.parameterInfo
       implementationClass="de.ljunker.kasm.intellij.KasmParameterInfoHandler"
@@ -26,13 +30,13 @@
       implementation="de.ljunker.kasm.intellij.KasmPostFormatProcessor"/>
     <configurationType
       implementation="de.ljunker.kasm.intellij.KasmRunConfigurationType"/>
+    <programRunner
+      implementation="de.ljunker.kasm.intellij.KasmDebugRunner"/>
     <runConfigurationProducer
       implementation="de.ljunker.kasm.intellij.KasmRunConfigurationProducer"/>
+    <xdebugger.breakpointType
+      implementation="de.ljunker.kasm.intellij.KasmLineBreakpointType"/>
   </extensions>
-  <description><![CDATA[
-  Formatting, highlighting and code completion for <a href="https://github.com/ljunker/Kasm">KASM</a>
-  ]]>
-  </description>
 
   <name>KASM Language</name>
 
