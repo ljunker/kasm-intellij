@@ -4,11 +4,11 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class KasmCompletionContributorTest : BasePlatformTestCase() {
     fun testCompletesInstructionPrefixInKasmFile() {
-        myFixture.configureByText(KasmFileType, "MO<caret>")
+        myFixture.configureByText(KasmFileType, "HA<caret>")
 
         myFixture.completeBasic()
 
-        assertEquals("MOV", myFixture.editor.document.text)
+        assertEquals("HALT", myFixture.editor.document.text)
     }
 
     fun testShowsInstructionsAndRegistersInKasmFile() {
@@ -21,8 +21,11 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
         assertContainsElements(
             completions,
             "MOV",
+            "ADDI",
             "JNZ",
+            "JGE",
             "LOAD",
+            "NOP",
             "RET",
             ".equ",
             ".byte",

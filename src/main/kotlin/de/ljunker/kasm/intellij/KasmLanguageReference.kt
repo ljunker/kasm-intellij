@@ -54,6 +54,7 @@ enum class KasmOperandType(val displayName: String) {
     BYTE_VALUE("byte-value"),
     JUMP_TARGET("jump-target"),
     MEMORY_ADDRESS("memory-address"),
+    INDEXED_MEMORY_ADDRESS("indexed-memory-address"),
     SYMBOL("symbol"),
     EXPRESSION("expr"),
     STRING("string")
@@ -71,14 +72,44 @@ object KasmLanguageReference {
         instruction("ADD", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Add into the target register with an 8-bit wrapped result."
         },
+        instruction("ADDI", KasmOperandType.REGISTER, KasmOperandType.BYTE_VALUE) {
+            "Add an immediate byte value into the target register."
+        },
         instruction("SUB", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Subtract into the target register with an 8-bit wrapped result."
+        },
+        instruction("SUBI", KasmOperandType.REGISTER, KasmOperandType.BYTE_VALUE) {
+            "Subtract an immediate byte value from the target register."
         },
         instruction("INC", KasmOperandType.REGISTER) {
             "Increment one register with an 8-bit wrapped result."
         },
         instruction("DEC", KasmOperandType.REGISTER) {
             "Decrement one register with an 8-bit wrapped result."
+        },
+        instruction("MUL", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Multiply into the target register with an 8-bit wrapped result."
+        },
+        instruction("DIV", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Divide the target register by the source register."
+        },
+        instruction("MOD", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Store the target modulo the source register."
+        },
+        instruction("NEG", KasmOperandType.REGISTER) {
+            "Two's-complement negate one register."
+        },
+        instruction("AND", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Bitwise AND into the target register."
+        },
+        instruction("OR", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Bitwise OR into the target register."
+        },
+        instruction("XOR", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Bitwise XOR into the target register."
+        },
+        instruction("NOT", KasmOperandType.REGISTER) {
+            "Bitwise invert one register."
         },
         instruction("CMP", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Compare two registers by updating result flags."
@@ -99,16 +130,28 @@ object KasmLanguageReference {
             "Jump when the Zero flag is clear."
         },
         instruction("JG", KasmOperandType.JUMP_TARGET) {
-            "Signed jump when the last flagged result was greater than zero."
+            "Signed jump when the last comparison was greater."
+        },
+        instruction("JGE", KasmOperandType.JUMP_TARGET) {
+            "Signed jump when the last comparison was greater or equal."
         },
         instruction("JL", KasmOperandType.JUMP_TARGET) {
-            "Signed jump when the last flagged result was less than zero."
+            "Signed jump when the last comparison was less."
+        },
+        instruction("JLE", KasmOperandType.JUMP_TARGET) {
+            "Signed jump when the last comparison was less or equal."
         },
         instruction("LOAD", KasmOperandType.REGISTER, KasmOperandType.MEMORY_ADDRESS) {
             "Load one data-memory cell into a register."
         },
+        instruction("LOAD", KasmOperandType.REGISTER, KasmOperandType.INDEXED_MEMORY_ADDRESS) {
+            "Load one indexed data-memory cell into a register."
+        },
         instruction("STORE", KasmOperandType.MEMORY_ADDRESS, KasmOperandType.REGISTER) {
             "Store a register value into one data-memory cell."
+        },
+        instruction("STORE", KasmOperandType.INDEXED_MEMORY_ADDRESS, KasmOperandType.REGISTER) {
+            "Store a register value into one indexed data-memory cell."
         },
         instruction("PUSH", KasmOperandType.REGISTER) {
             "Push a register value on the stack."
@@ -121,6 +164,12 @@ object KasmLanguageReference {
         },
         instruction("RET") {
             "Pop a return address and jump back to it."
+        },
+        instruction("CLR", KasmOperandType.REGISTER) {
+            "Clear one register to zero."
+        },
+        instruction("NOP") {
+            "Do nothing."
         },
         instruction("PRINT", KasmOperandType.REGISTER) {
             "Print the register value as one output line."

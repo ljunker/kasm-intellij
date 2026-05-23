@@ -9,7 +9,7 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
             """
             |.equ START_VALUE, (0x20 + 1)
             |loop:
-            |LOAD R1, [0x28] ; direct memory
+            |LOAD R1, [message + R2] ; indexed memory
             |message: .string "count; down"
             |JNZ R1, loop
             """.trimMargin()
@@ -21,6 +21,7 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
             KasmTokenTypes.LABEL,
             KasmTokenTypes.INSTRUCTION,
             KasmTokenTypes.REGISTER,
+            KasmTokenTypes.IDENTIFIER,
             KasmTokenTypes.NUMBER,
             KasmTokenTypes.STRING,
             KasmTokenTypes.LEFT_BRACKET,

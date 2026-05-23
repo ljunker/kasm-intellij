@@ -13,7 +13,7 @@ class KasmFormattingTest : BasePlatformTestCase() {
             |  loop:
             |DEC R0
             |     JNZ R0, loop
-            |  LOAD R1, [40]
+            |  LOAD R1, [buffer + R2]
             |HALT
             """.trimMargin()
         )
@@ -28,7 +28,7 @@ class KasmFormattingTest : BasePlatformTestCase() {
             |loop:
             |    DEC R0
             |    JNZ R0, loop
-            |    LOAD R1, [40]
+            |    LOAD R1, [buffer + R2]
             |    HALT
             """.trimMargin(),
             myFixture.editor.document.text

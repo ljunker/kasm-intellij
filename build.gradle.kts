@@ -43,7 +43,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            New Version of KASM
+            KASM 0.2.0 language update with new arithmetic, bitwise, comparison, CLR, and NOP instructions.
+            Adds indexed LOAD and STORE memory forms to completion and signature help.
         """.trimIndent()
     }
 

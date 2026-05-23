@@ -4,7 +4,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
     fun testFindsCurrentOperandAfterLeadingLabel() {
-        val source = "loop: LOAD R1, [40]"
+        val source = "loop: LOAD R1, [buffer + R2]"
 
         val call = KasmInstructionCallFinder.find(source, source.length)
 
@@ -22,6 +22,39 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
             signatures,
             "MOV register, byte-value",
             "MOV register, register"
+        )
+    }
+
+    fun testReferenceContainsUpdatedInstructionForms() {
+        val loadSignatures = KasmLanguageReference.formsFor("load")
+            .map { it.signature }
+        val storeSignatures = KasmLanguageReference.formsFor("store")
+            .map { it.signature }
+        val arithmeticSignatures = listOf(
+            KasmLanguageReference.formsFor("addi").single().signature,
+            KasmLanguageReference.formsFor("mul").single().signature,
+            KasmLanguageReference.formsFor("neg").single().signature,
+            KasmLanguageReference.formsFor("jge").single().signature,
+            KasmLanguageReference.formsFor("nop").single().signature
+        )
+
+        assertSameElements(
+            loadSignatures,
+            "LOAD register, memory-address",
+            "LOAD register, indexed-memory-address"
+        )
+        assertSameElements(
+            storeSignatures,
+            "STORE memory-address, register",
+            "STORE indexed-memory-address, register"
+        )
+        assertSameElements(
+            arithmeticSignatures,
+            "ADDI register, byte-value",
+            "MUL register, register",
+            "NEG register",
+            "JGE jump-target",
+            "NOP"
         )
     }
 
