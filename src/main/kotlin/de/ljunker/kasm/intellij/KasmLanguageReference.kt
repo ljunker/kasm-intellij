@@ -51,10 +51,13 @@ typealias KasmInstructionForm = KasmStatementForm
 
 enum class KasmOperandType(val displayName: String) {
     REGISTER("register"),
+    ADDRESS_REGISTER("address-register"),
     BYTE_VALUE("byte-value"),
+    ADDRESS_VALUE("address-value"),
     JUMP_TARGET("jump-target"),
     MEMORY_ADDRESS("memory-address"),
     INDEXED_MEMORY_ADDRESS("indexed-memory-address"),
+    ADDRESS_REGISTER_MEMORY_ADDRESS("address-register-memory-address"),
     SYMBOL("symbol"),
     EXPRESSION("expr"),
     STRING("string")
@@ -68,6 +71,12 @@ object KasmLanguageReference {
         },
         instruction("MOV", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Copy one register into another register."
+        },
+        instruction("MOVA", KasmOperandType.ADDRESS_REGISTER, KasmOperandType.ADDRESS_VALUE) {
+            "Copy a 16-bit address into an address register."
+        },
+        instruction("MOVA", KasmOperandType.ADDRESS_REGISTER, KasmOperandType.ADDRESS_REGISTER) {
+            "Copy one address register into another."
         },
         instruction("ADD", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Add into the target register with an 8-bit wrapped result."
@@ -147,11 +156,23 @@ object KasmLanguageReference {
         instruction("LOAD", KasmOperandType.REGISTER, KasmOperandType.INDEXED_MEMORY_ADDRESS) {
             "Load one indexed data-memory cell into a register."
         },
+        instruction("LOAD", KasmOperandType.REGISTER, KasmOperandType.ADDRESS_REGISTER_MEMORY_ADDRESS) {
+            "Load through an address-register pointer into a register."
+        },
         instruction("STORE", KasmOperandType.MEMORY_ADDRESS, KasmOperandType.REGISTER) {
             "Store a register value into one data-memory cell."
         },
         instruction("STORE", KasmOperandType.INDEXED_MEMORY_ADDRESS, KasmOperandType.REGISTER) {
             "Store a register value into one indexed data-memory cell."
+        },
+        instruction("STORE", KasmOperandType.ADDRESS_REGISTER_MEMORY_ADDRESS, KasmOperandType.REGISTER) {
+            "Store a register value through an address-register pointer."
+        },
+        instruction("INCA", KasmOperandType.ADDRESS_REGISTER) {
+            "Increment one address register with 16-bit wrapping."
+        },
+        instruction("DECA", KasmOperandType.ADDRESS_REGISTER) {
+            "Decrement one address register with 16-bit wrapping."
         },
         instruction("PUSH", KasmOperandType.REGISTER) {
             "Push a register value on the stack."
@@ -174,6 +195,9 @@ object KasmLanguageReference {
         instruction("PRINT", KasmOperandType.REGISTER) {
             "Print the register value as one output line."
         },
+        instruction("PRINTC", KasmOperandType.REGISTER) {
+            "Print the register value as one ASCII character."
+        },
         instruction("HALT") {
             "Stop the VM."
         }
@@ -194,10 +218,17 @@ object KasmLanguageReference {
         },
         directive(".string", KasmOperandType.STRING) {
             "Initialize ASCII bytes followed by one zero byte."
+        },
+        directive(".incbin", KasmOperandType.STRING) {
+            "Initialize one data-memory cell per byte read from a binary file."
         }
     )
 
-    val registers = listOf("R0", "R1", "R2", "R3")
+    val byteRegisters = listOf("R0", "R1", "R2", "R3")
+
+    val addressRegisters = listOf("A0", "A1")
+
+    val registers = byteRegisters + addressRegisters
 
     val instructionNames: List<String> = instructionForms
         .map { it.name }

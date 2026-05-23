@@ -17,11 +17,18 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
     fun testReferenceContainsMovFormsFromLanguageReference() {
         val signatures = KasmLanguageReference.formsFor("mov")
             .map { it.signature }
+        val addressSignatures = KasmLanguageReference.formsFor("mova")
+            .map { it.signature }
 
         assertSameElements(
             signatures,
             "MOV register, byte-value",
             "MOV register, register"
+        )
+        assertSameElements(
+            addressSignatures,
+            "MOVA address-register, address-value",
+            "MOVA address-register, address-register"
         )
     }
 
@@ -30,31 +37,37 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
             .map { it.signature }
         val storeSignatures = KasmLanguageReference.formsFor("store")
             .map { it.signature }
-        val arithmeticSignatures = listOf(
+        val instructionSignatures = listOf(
             KasmLanguageReference.formsFor("addi").single().signature,
             KasmLanguageReference.formsFor("mul").single().signature,
             KasmLanguageReference.formsFor("neg").single().signature,
             KasmLanguageReference.formsFor("jge").single().signature,
-            KasmLanguageReference.formsFor("nop").single().signature
+            KasmLanguageReference.formsFor("nop").single().signature,
+            KasmLanguageReference.formsFor("inca").single().signature,
+            KasmLanguageReference.formsFor("printc").single().signature
         )
 
         assertSameElements(
             loadSignatures,
             "LOAD register, memory-address",
-            "LOAD register, indexed-memory-address"
+            "LOAD register, indexed-memory-address",
+            "LOAD register, address-register-memory-address"
         )
         assertSameElements(
             storeSignatures,
             "STORE memory-address, register",
-            "STORE indexed-memory-address, register"
+            "STORE indexed-memory-address, register",
+            "STORE address-register-memory-address, register"
         )
         assertSameElements(
-            arithmeticSignatures,
+            instructionSignatures,
             "ADDI register, byte-value",
             "MUL register, register",
             "NEG register",
             "JGE jump-target",
-            "NOP"
+            "NOP",
+            "INCA address-register",
+            "PRINTC register"
         )
     }
 
@@ -73,9 +86,12 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
     }
 
     fun testReferenceContainsDataDirectiveForms() {
-        val signatures = KasmLanguageReference.directiveFormsFor(".byte")
+        val byteSignatures = KasmLanguageReference.directiveFormsFor(".byte")
+            .map { it.signature }
+        val incbinSignatures = KasmLanguageReference.directiveFormsFor(".incbin")
             .map { it.signature }
 
-        assertSameElements(signatures, ".byte expr, ...")
+        assertSameElements(byteSignatures, ".byte expr, ...")
+        assertSameElements(incbinSignatures, ".incbin string")
     }
 }

@@ -227,6 +227,10 @@ private class KasmStackFrame(
             children.add("R$register", KasmValue("word", value))
         }
 
+        vm.addressRegisters.forEachIndexed { register, value ->
+            children.add("A$register", KasmValue("address", value))
+        }
+
         children.add("Z", KasmValue("flag", vm.zeroFlag))
         children.add("S", KasmValue("flag", vm.signFlag))
         children.add("C", KasmValue("flag", vm.carryFlag))

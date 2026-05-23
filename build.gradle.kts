@@ -43,8 +43,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            KASM 0.2.0 language update with new arithmetic, bitwise, comparison, CLR, and NOP instructions.
-            Adds indexed LOAD and STORE memory forms to completion and signature help.
+            Adds support for the KASM 0.3.0 address model with A0/A1 address registers and 16-bit addresses.
+            Adds MOVA, INCA, DECA, PRINTC, .incbin, and address-register memory forms to editor help and highlighting.
         """.trimIndent()
     }
 

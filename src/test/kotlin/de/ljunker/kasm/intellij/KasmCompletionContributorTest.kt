@@ -21,16 +21,21 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
         assertContainsElements(
             completions,
             "MOV",
+            "MOVA",
             "ADDI",
             "JNZ",
             "JGE",
             "LOAD",
+            "INCA",
             "NOP",
+            "PRINTC",
             "RET",
             ".equ",
             ".byte",
             ".string",
-            "R0"
+            ".incbin",
+            "R0",
+            "A0"
         )
     }
 
@@ -41,5 +46,14 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
             .map { it.lookupString }
 
         assertContainsElements(completions, ".string")
+    }
+
+    fun testCompletesIncbinDirectivePrefixInKasmFile() {
+        myFixture.configureByText(KasmFileType, ".in<caret>")
+
+        val completions = myFixture.completeBasic()
+            .map { it.lookupString }
+
+        assertContainsElements(completions, ".incbin")
     }
 }
