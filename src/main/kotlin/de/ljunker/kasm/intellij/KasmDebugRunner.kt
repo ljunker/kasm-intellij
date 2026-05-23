@@ -17,6 +17,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import de.ljunker.kasm.Assembler
 import de.ljunker.kasm.AssemblyException
+import java.nio.file.Path
 
 class KasmDebugRunner : GenericProgramRunner<RunnerSettings>() {
     override fun getRunnerId() = "KasmDebugRunner"
@@ -39,7 +40,8 @@ class KasmDebugRunner : GenericProgramRunner<RunnerSettings>() {
             ?: throw ExecutionException("KASM program file not found: ${configuration.programPath}")
 
         val debugProgram = try {
-            Assembler().assembleWithDebugInfo(VfsUtilCore.loadText(sourceFile))
+            Assembler(baseDirectory = kasmBaseDirectoryForProgram(configuration.programPath))
+                .assembleWithDebugInfo(VfsUtilCore.loadText(sourceFile))
         } catch (error: AssemblyException) {
             throw ExecutionException("KASM assembly failed: ${error.message}", error)
         }
@@ -59,4 +61,9 @@ class KasmDebugRunner : GenericProgramRunner<RunnerSettings>() {
 
         return debugSession.runContentDescriptor
     }
+}
+
+internal fun kasmBaseDirectoryForProgram(programPath: String): Path {
+    val sourcePath = Path.of(programPath).toAbsolutePath().normalize()
+    return sourcePath.parent ?: Path.of(".").toAbsolutePath().normalize()
 }

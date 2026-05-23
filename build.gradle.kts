@@ -43,8 +43,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Adds support for the KASM 0.3.0 address model with A0/A1 address registers and 16-bit addresses.
-            Adds MOVA, INCA, DECA, PRINTC, .incbin, and address-register memory forms to editor help and highlighting.
+            Fixes IntelliJ debug sessions for KASM files that use .incbin with paths relative to the source file.
+            The debugger now uses the .kasm file directory as the assembler base directory, matching the KASM CLI.
         """.trimIndent()
     }
 
