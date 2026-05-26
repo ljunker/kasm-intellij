@@ -43,8 +43,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Fixes IntelliJ debug sessions for KASM files that use .incbin with paths relative to the source file.
-            The debugger now uses the .kasm file directory as the assembler base directory, matching the KASM CLI.
+            Adds KASM 0.4.0 language support for .num64, ADC/SBC, stack argument helpers, and flag stack operations.
+            Updates completion, highlighting, signature help, and bundled KASM library version.
         """.trimIndent()
     }
 

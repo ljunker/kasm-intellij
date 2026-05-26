@@ -81,11 +81,17 @@ object KasmLanguageReference {
         instruction("ADD", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Add into the target register with an 8-bit wrapped result."
         },
+        instruction("ADC", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Add source plus the current Carry flag into the target register."
+        },
         instruction("ADDI", KasmOperandType.REGISTER, KasmOperandType.BYTE_VALUE) {
             "Add an immediate byte value into the target register."
         },
         instruction("SUB", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
             "Subtract into the target register with an 8-bit wrapped result."
+        },
+        instruction("SBC", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Subtract source plus the current Carry flag from the target register."
         },
         instruction("SUBI", KasmOperandType.REGISTER, KasmOperandType.BYTE_VALUE) {
             "Subtract an immediate byte value from the target register."
@@ -177,8 +183,41 @@ object KasmLanguageReference {
         instruction("PUSH", KasmOperandType.REGISTER) {
             "Push a register value on the stack."
         },
+        instruction("PUSHI", KasmOperandType.BYTE_VALUE) {
+            "Push an immediate byte value on the stack."
+        },
+        instruction("PUSHA", KasmOperandType.ADDRESS_VALUE) {
+            "Push a 16-bit address value as two stack bytes."
+        },
+        instruction("PUSHA", KasmOperandType.ADDRESS_REGISTER) {
+            "Push a 16-bit address register value as two stack bytes."
+        },
         instruction("POP", KasmOperandType.REGISTER) {
             "Pop the stack top into a register."
+        },
+        instruction("DROP", KasmOperandType.BYTE_VALUE) {
+            "Pop and discard a fixed number of stack bytes."
+        },
+        instruction("DROP", KasmOperandType.REGISTER) {
+            "Pop and discard the register value's number of stack bytes."
+        },
+        instruction("PEEK", KasmOperandType.REGISTER, KasmOperandType.BYTE_VALUE) {
+            "Copy a stack byte at an offset from SP into a register."
+        },
+        instruction("PEEK", KasmOperandType.REGISTER, KasmOperandType.REGISTER) {
+            "Copy a stack byte at a register offset from SP into a register."
+        },
+        instruction("PEEKA", KasmOperandType.ADDRESS_REGISTER, KasmOperandType.BYTE_VALUE) {
+            "Copy two stack bytes at an offset from SP into an address register."
+        },
+        instruction("PEEKA", KasmOperandType.ADDRESS_REGISTER, KasmOperandType.REGISTER) {
+            "Copy two stack bytes at a register offset from SP into an address register."
+        },
+        instruction("PUSHF") {
+            "Push Zero, Sign, Carry, and Overflow as one flag byte."
+        },
+        instruction("POPF") {
+            "Pop one flag byte and restore Zero, Sign, Carry, and Overflow."
         },
         instruction("CALL", KasmOperandType.JUMP_TARGET) {
             "Push the return address and jump to a function."
@@ -212,6 +251,9 @@ object KasmLanguageReference {
         },
         directive(".byte", KasmOperandType.EXPRESSION, variadic = true) {
             "Initialize one data-memory cell per byte expression."
+        },
+        directive(".num64", KasmOperandType.EXPRESSION) {
+            "Initialize eight little-endian cells from an unsigned 64-bit expression."
         },
         directive(".ascii", KasmOperandType.STRING) {
             "Initialize ASCII bytes without a terminator."

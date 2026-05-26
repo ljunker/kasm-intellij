@@ -8,9 +8,13 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
         val tokenTypes = lex(
             """
             |.equ START_VALUE, (0x20 + 1)
+            |value: .num64 655361234
             |.incbin "blob.bin"
             |loop:
             |MOVA A0, 0x1200
+            |PUSHA value
+            |PEEKA A1, 2
+            |PUSHF
             |LOAD R0, [A0]
             |LOAD R1, [message + R2] ; indexed memory
             |message: .string "count; down"

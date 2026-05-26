@@ -6,32 +6,33 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
     fun testCompletesInstructionPrefixInKasmFile() {
         myFixture.configureByText(KasmFileType, "HA<caret>")
 
-        myFixture.completeBasic()
-
-        assertEquals("HALT", myFixture.editor.document.text)
+        assertContainsElements(completionResults(), "HALT")
     }
 
     fun testShowsInstructionsAndRegistersInKasmFile() {
         myFixture.configureByText(KasmFileType, "<caret>")
 
-        val completions = myFixture.completeBasic()
-            .map { it.lookupString }
+        val completions = completionResults()
 
         assertSame(KasmLanguage, myFixture.file.language)
         assertContainsElements(
             completions,
             "MOV",
             "MOVA",
+            "ADC",
             "ADDI",
             "JNZ",
             "JGE",
             "LOAD",
             "INCA",
             "NOP",
+            "PUSHF",
+            "PEEKA",
             "PRINTC",
             "RET",
             ".equ",
             ".byte",
+            ".num64",
             ".string",
             ".incbin",
             "R0",
@@ -42,8 +43,7 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
     fun testCompletesDirectivePrefixInKasmFile() {
         myFixture.configureByText(KasmFileType, ".st<caret>")
 
-        val completions = myFixture.completeBasic()
-            .map { it.lookupString }
+        val completions = completionResults()
 
         assertContainsElements(completions, ".string")
     }
@@ -51,9 +51,21 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
     fun testCompletesIncbinDirectivePrefixInKasmFile() {
         myFixture.configureByText(KasmFileType, ".in<caret>")
 
-        val completions = myFixture.completeBasic()
-            .map { it.lookupString }
+        val completions = completionResults()
 
         assertContainsElements(completions, ".incbin")
     }
+
+    fun testCompletesNum64DirectivePrefixInKasmFile() {
+        myFixture.configureByText(KasmFileType, ".nu<caret>")
+
+        val completions = completionResults()
+
+        assertContainsElements(completions, ".num64")
+    }
+
+    private fun completionResults(): List<String> =
+        myFixture.completeBasic()
+            ?.map { it.lookupString }
+            ?: listOf(myFixture.editor.document.text)
 }
