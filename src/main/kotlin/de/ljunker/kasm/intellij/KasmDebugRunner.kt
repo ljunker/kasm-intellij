@@ -10,7 +10,6 @@ import com.intellij.execution.runners.GenericProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
@@ -39,9 +38,9 @@ class KasmDebugRunner : GenericProgramRunner<RunnerSettings>() {
             .findFileByPath(configuration.programPath)
             ?: throw ExecutionException("KASM program file not found: ${configuration.programPath}")
 
+        val sourcePath = Path.of(configuration.programPath).toAbsolutePath().normalize()
         val debugProgram = try {
-            Assembler(baseDirectory = kasmBaseDirectoryForProgram(configuration.programPath))
-                .assembleWithDebugInfo(VfsUtilCore.loadText(sourceFile))
+            Assembler().assembleFileWithDebugInfo(sourcePath)
         } catch (error: AssemblyException) {
             throw ExecutionException("KASM assembly failed: ${error.message}", error)
         }
@@ -53,7 +52,6 @@ class KasmDebugRunner : GenericProgramRunner<RunnerSettings>() {
                     override fun start(session: XDebugSession): XDebugProcess =
                         KasmDebugProcess(
                             session = session,
-                            sourceFile = sourceFile,
                             debugProgram = debugProgram
                         )
                 }
@@ -61,9 +59,4 @@ class KasmDebugRunner : GenericProgramRunner<RunnerSettings>() {
 
         return debugSession.runContentDescriptor
     }
-}
-
-internal fun kasmBaseDirectoryForProgram(programPath: String): Path {
-    val sourcePath = Path.of(programPath).toAbsolutePath().normalize()
-    return sourcePath.parent ?: Path.of(".").toAbsolutePath().normalize()
 }

@@ -35,6 +35,7 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
             ".num64",
             ".string",
             ".incbin",
+            ".include",
             "R0",
             "A0"
         )
@@ -53,7 +54,7 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
 
         val completions = completionResults()
 
-        assertContainsElements(completions, ".incbin")
+        assertContainsElements(completions, ".incbin", ".include")
     }
 
     fun testCompletesNum64DirectivePrefixInKasmFile() {

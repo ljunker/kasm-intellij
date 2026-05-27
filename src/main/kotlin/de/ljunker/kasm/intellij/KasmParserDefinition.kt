@@ -33,7 +33,11 @@ class KasmParserDefinition : ParserDefinition {
 
     override fun getStringLiteralElements(): TokenSet = TokenSet.create(KasmTokenTypes.STRING)
 
-    override fun createElement(node: ASTNode): PsiElement = ASTWrapperPsiElement(node)
+    override fun createElement(node: ASTNode): PsiElement =
+        when (node.elementType) {
+            KasmTokenTypes.IDENTIFIER -> KasmIdentifierElement(node)
+            else -> ASTWrapperPsiElement(node)
+        }
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile = KasmFile(viewProvider)
 
@@ -45,4 +49,8 @@ class KasmParserDefinition : ParserDefinition {
     companion object {
         private val FILE = IFileElementType(KasmLanguage)
     }
+}
+
+private class KasmIdentifierElement(node: ASTNode) : ASTWrapperPsiElement(node) {
+    override fun getReference() = kasmLabelReference(this)
 }

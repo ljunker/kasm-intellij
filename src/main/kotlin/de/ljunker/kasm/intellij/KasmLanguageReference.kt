@@ -263,6 +263,9 @@ object KasmLanguageReference {
         },
         directive(".incbin", KasmOperandType.STRING) {
             "Initialize one data-memory cell per byte read from a binary file."
+        },
+        directive(".include", KasmOperandType.STRING) {
+            "Expand another KASM source file at this point."
         }
     )
 

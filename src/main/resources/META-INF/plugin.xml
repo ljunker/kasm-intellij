@@ -11,6 +11,8 @@
     <completion.contributor
       implementationClass="de.ljunker.kasm.intellij.KasmCompletionContributor"
       language="KASM"/>
+    <psi.referenceContributor
+      implementation="de.ljunker.kasm.intellij.KasmLabelReferenceContributor"/>
     <fileType
       extensions="kasm"
       fieldName="INSTANCE"

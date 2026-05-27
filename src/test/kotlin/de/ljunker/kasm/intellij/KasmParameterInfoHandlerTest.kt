@@ -130,9 +130,12 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
             .map { it.signature }
         val incbinSignatures = KasmLanguageReference.directiveFormsFor(".incbin")
             .map { it.signature }
+        val includeSignatures = KasmLanguageReference.directiveFormsFor(".include")
+            .map { it.signature }
 
         assertSameElements(byteSignatures, ".byte expr, ...")
         assertSameElements(num64Signatures, ".num64 expr")
         assertSameElements(incbinSignatures, ".incbin string")
+        assertSameElements(includeSignatures, ".include string")
     }
 }

@@ -4,7 +4,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XSourcePosition
@@ -13,14 +13,14 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.XSourcePositionImpl
-import de.ljunker.kasm.*
+import de.ljunker.kasm.DebugProgram
+import de.ljunker.kasm.VmSnapshot
 
-class KasmDebugProcess(
+internal class KasmDebugProcess(
     session: XDebugSession,
-    private val sourceFile: VirtualFile,
     debugProgram: DebugProgram
 ) : XDebugProcess(session) {
-    private val kasmSession = DebugSession(
+    private val kasmSession = KasmDebugSession(
         debugProgram = debugProgram,
         output = ::printProgramOutput
     )
@@ -48,28 +48,30 @@ class KasmDebugProcess(
     }
 
     override fun startStepOver(context: XSuspendContext?) {
-        step()
+        execute {
+            kasmSession.stepOver()
+        }
     }
 
     override fun startStepInto(context: XSuspendContext?) {
-        step()
+        stepInto()
     }
 
     override fun startStepOut(context: XSuspendContext?) {
-        step()
+        stepInto()
     }
 
     override fun stop() {
         stopped = true
     }
 
-    private fun step() {
+    private fun stepInto() {
         execute {
-            kasmSession.step()
+            kasmSession.stepInto()
         }
     }
 
-    private fun execute(operation: () -> DebugStop) {
+    private fun execute(operation: () -> KasmDebugStop) {
         if (stopped) {
             return
         }
@@ -91,20 +93,20 @@ class KasmDebugProcess(
         }
     }
 
-    private fun handleStop(stop: DebugStop) {
+    private fun handleStop(stop: KasmDebugStop) {
         when (stop) {
-            is DebugStop.BreakpointHit ->
+            is KasmDebugStop.BreakpointHit ->
                 suspendAt(stop.snapshot)
 
-            is DebugStop.Stepped ->
+            is KasmDebugStop.Stepped ->
                 suspendAt(stop.snapshot)
 
-            is DebugStop.Halted -> {
+            is KasmDebugStop.Halted -> {
                 printSystemOutput("Program halted.")
                 session.stop()
             }
 
-            is DebugStop.VmError -> {
+            is KasmDebugStop.VmError -> {
                 session.reportMessage(
                     "KASM VM error: ${stop.error.message}",
                     MessageType.ERROR
@@ -114,12 +116,11 @@ class KasmDebugProcess(
         }
     }
 
-    private fun suspendAt(snapshot: DebugSnapshot) {
+    private fun suspendAt(snapshot: KasmDebugSnapshot) {
         session.positionReached(
             KasmSuspendContext(
                 frame = KasmStackFrame(
-                    snapshot = snapshot,
-                    sourceFile = sourceFile
+                    snapshot = snapshot
                 )
             )
         )
@@ -148,12 +149,15 @@ class KasmDebugProcess(
         ) {
             val sourcePosition = breakpoint.sourcePosition
 
-            if (sourcePosition == null || sourcePosition.file.path != sourceFile.path) {
+            if (sourcePosition == null) {
                 return
             }
 
             val breakpointLine = breakpoint.line + 1
-            val kasmBreakpoint = kasmSession.setBreakpoint(breakpointLine)
+            val kasmBreakpoint = kasmSession.setBreakpoint(
+                filePath = sourcePosition.file.path,
+                lineNumber = breakpointLine
+            )
 
             if (kasmBreakpoint == null) {
                 session.setBreakpointInvalid(
@@ -171,11 +175,14 @@ class KasmDebugProcess(
         ) {
             val sourcePosition = breakpoint.sourcePosition
 
-            if (sourcePosition == null || sourcePosition.file.path != sourceFile.path) {
+            if (sourcePosition == null) {
                 return
             }
 
-            kasmSession.removeBreakpoint(breakpoint.line + 1)
+            kasmSession.removeBreakpoint(
+                filePath = sourcePosition.file.path,
+                lineNumber = breakpoint.line + 1
+            )
         }
     }
 }
@@ -207,11 +214,14 @@ private class KasmExecutionStack(
 }
 
 private class KasmStackFrame(
-    private val snapshot: DebugSnapshot,
-    private val sourceFile: VirtualFile
+    private val snapshot: KasmDebugSnapshot
 ) : XStackFrame() {
     override fun getSourcePosition(): XSourcePosition? {
         val location = snapshot.nextLocation ?: return null
+        val sourcePath = location.sourcePath ?: return null
+        val sourceFile = LocalFileSystem.getInstance()
+            .findFileByPath(sourcePath.toAbsolutePath().normalize().toString())
+            ?: return null
         return XSourcePositionImpl.create(sourceFile, location.lineNumber - 1)
     }
 

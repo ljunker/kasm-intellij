@@ -10,6 +10,7 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
             |.equ START_VALUE, (0x20 + 1)
             |value: .num64 655361234
             |.incbin "blob.bin"
+            |.include "lib/u64-core.kasm"
             |loop:
             |MOVA A0, 0x1200
             |PUSHA value

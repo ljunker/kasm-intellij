@@ -43,8 +43,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Adds KASM 0.4.0 language support for .num64, ADC/SBC, stack argument helpers, and flag stack operations.
-            Updates completion, highlighting, signature help, and bundled KASM library version.
+            Adds KASM 0.6.0 source-aware include debugging support.
+            Adds label navigation and separate step-over/step-into behavior for CALL instructions.
         """.trimIndent()
     }
 
