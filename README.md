@@ -74,8 +74,9 @@ The plugin uses the headless KASM debug session API for source-level IntelliJ de
 3. Set breakpoints on executable KASM instruction lines.
 4. Start the configuration with the IntelliJ Debug action.
 
-The debug tool window stops at KASM source locations, supports resume and stepping, shows registers, flags, stack
-values, and non-zero data memory, and prints KASM program output in the debug console.
+The debug tool window stops at KASM source locations, supports resume and stepping, shows registers, flags,
+debugger-provided constants and data variables, stack values, and non-zero data memory, and prints KASM program output
+in the debug console.
 
 ## Publishing
 

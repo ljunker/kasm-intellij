@@ -43,8 +43,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Adds KASM 0.6.0 source-aware include debugging support.
-            Adds label navigation and separate step-over/step-into behavior for CALL instructions.
+            Adds KASM 0.7.0 debug symbol support.
+            Shows debugger-provided constants and data variables in IntelliJ debug sessions.
         """.trimIndent()
     }
 

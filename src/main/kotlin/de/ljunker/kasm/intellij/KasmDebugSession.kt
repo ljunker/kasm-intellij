@@ -1,11 +1,10 @@
 package de.ljunker.kasm.intellij
 
 import de.ljunker.kasm.DebugProgram
+import de.ljunker.kasm.DebugSnapshot
 import de.ljunker.kasm.Opcode
-import de.ljunker.kasm.SourceLocation
 import de.ljunker.kasm.VirtualMachine
 import de.ljunker.kasm.VmException
-import de.ljunker.kasm.VmSnapshot
 import java.nio.file.Path
 
 internal class KasmDebugSession(
@@ -41,11 +40,15 @@ internal class KasmDebugSession(
         return breakpointsByAddress.remove(address) != null
     }
 
-    fun snapshot(): KasmDebugSnapshot =
-        KasmDebugSnapshot(
-            vm = vm.snapshot(),
-            nextLocation = debugProgram.sourceMap.locationForAddress(vm.instructionPointer)
+    fun snapshot(): DebugSnapshot {
+        val vmSnapshot = vm.snapshot()
+
+        return DebugSnapshot(
+            vm = vmSnapshot,
+            nextLocation = debugProgram.sourceMap.locationForAddress(vm.instructionPointer),
+            symbols = debugProgram.symbols.snapshot(vmSnapshot.memory)
         )
+    }
 
     fun run(): KasmDebugStop {
         if (!vm.isRunning) {
@@ -166,29 +169,24 @@ internal data class KasmSourceBreakpoint(
     val address: Int
 )
 
-internal data class KasmDebugSnapshot(
-    val vm: VmSnapshot,
-    val nextLocation: SourceLocation?
-)
-
 internal sealed interface KasmDebugStop {
-    val snapshot: KasmDebugSnapshot
+    val snapshot: DebugSnapshot
 
     data class BreakpointHit(
         val breakpoint: KasmSourceBreakpoint,
-        override val snapshot: KasmDebugSnapshot
+        override val snapshot: DebugSnapshot
     ) : KasmDebugStop
 
     data class Stepped(
-        override val snapshot: KasmDebugSnapshot
+        override val snapshot: DebugSnapshot
     ) : KasmDebugStop
 
     data class Halted(
-        override val snapshot: KasmDebugSnapshot
+        override val snapshot: DebugSnapshot
     ) : KasmDebugStop
 
     data class VmError(
         val error: VmException,
-        override val snapshot: KasmDebugSnapshot
+        override val snapshot: DebugSnapshot
     ) : KasmDebugStop
 }

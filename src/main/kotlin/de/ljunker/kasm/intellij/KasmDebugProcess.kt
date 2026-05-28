@@ -14,6 +14,9 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import de.ljunker.kasm.DebugProgram
+import de.ljunker.kasm.DebugSnapshot
+import de.ljunker.kasm.DebugVariableKind
+import de.ljunker.kasm.DebugVariableValue
 import de.ljunker.kasm.VmSnapshot
 
 internal class KasmDebugProcess(
@@ -116,7 +119,7 @@ internal class KasmDebugProcess(
         }
     }
 
-    private fun suspendAt(snapshot: KasmDebugSnapshot) {
+    private fun suspendAt(snapshot: DebugSnapshot) {
         session.positionReached(
             KasmSuspendContext(
                 frame = KasmStackFrame(
@@ -214,7 +217,7 @@ private class KasmExecutionStack(
 }
 
 private class KasmStackFrame(
-    private val snapshot: KasmDebugSnapshot
+    private val snapshot: DebugSnapshot
 ) : XStackFrame() {
     override fun getSourcePosition(): XSourcePosition? {
         val location = snapshot.nextLocation ?: return null
@@ -246,10 +249,33 @@ private class KasmStackFrame(
         children.add("C", KasmValue("flag", vm.carryFlag))
         children.add("O", KasmValue("flag", vm.overflowFlag))
 
+        addConstants(children, snapshot)
+        addVariables(children, snapshot)
         addStackValues(children, vm)
         addMemoryValues(children, vm)
 
         node.addChildren(children, true)
+    }
+
+    private fun addConstants(children: XValueChildrenList, snapshot: DebugSnapshot) {
+        snapshot.symbols.constants.forEach { constant ->
+            children.add(
+                constant.name,
+                KasmValue("constant", constant.value)
+            )
+        }
+    }
+
+    private fun addVariables(children: XValueChildrenList, snapshot: DebugSnapshot) {
+        snapshot.symbols.variables.forEach { value ->
+            children.add(
+                value.variable.name,
+                KasmValue(
+                    "${value.variable.kind.name.lowercase()} @ ${formatAddress(value.variable.address)}",
+                    formatVariableValue(value)
+                )
+            )
+        }
     }
 
     private fun addStackValues(children: XValueChildrenList, vm: VmSnapshot) {
@@ -273,6 +299,40 @@ private class KasmStackFrame(
                 )
             }
     }
+
+    private fun formatVariableValue(value: DebugVariableValue): String =
+        when (value.variable.kind) {
+            DebugVariableKind.BYTE,
+            DebugVariableKind.NUM64 ->
+                value.numericValue?.toString() ?: formatByteList(value.bytes)
+
+            DebugVariableKind.ASCII,
+            DebugVariableKind.STRING ->
+                formatAscii(value.bytes)
+
+            DebugVariableKind.INCBIN ->
+                formatByteList(value.bytes)
+        }
+
+    private fun formatByteList(bytes: List<Int>): String =
+        bytes.joinToString(prefix = "[", separator = ",", postfix = "]")
+
+    private fun formatAscii(bytes: List<Int>): String =
+        bytes.joinToString(prefix = "\"", separator = "", postfix = "\"") { byte ->
+            when (byte) {
+                0 -> "\\0"
+                '\n'.code -> "\\n"
+                '\r'.code -> "\\r"
+                '\t'.code -> "\\t"
+                '"'.code -> "\\\""
+                '\\'.code -> "\\\\"
+                in 32..126 -> byte.toChar().toString()
+                else -> "\\x%02X".format(byte)
+            }
+        }
+
+    private fun formatAddress(address: Int): String =
+        "0x%04X".format(address)
 }
 
 private class KasmValue(
