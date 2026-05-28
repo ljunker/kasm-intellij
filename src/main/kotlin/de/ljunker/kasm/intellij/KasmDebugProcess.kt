@@ -17,11 +17,12 @@ import de.ljunker.kasm.DebugProgram
 import de.ljunker.kasm.DebugSnapshot
 import de.ljunker.kasm.DebugVariableKind
 import de.ljunker.kasm.DebugVariableValue
+import de.ljunker.kasm.ProgramFile
 import de.ljunker.kasm.VmSnapshot
 
 internal class KasmDebugProcess(
     session: XDebugSession,
-    debugProgram: DebugProgram
+    private val debugProgram: DebugProgram
 ) : XDebugProcess(session) {
     private val kasmSession = KasmDebugSession(
         debugProgram = debugProgram,
@@ -123,7 +124,8 @@ internal class KasmDebugProcess(
         session.positionReached(
             KasmSuspendContext(
                 frame = KasmStackFrame(
-                    snapshot = snapshot
+                    snapshot = snapshot,
+                    fileResources = debugProgram.program.fileResources
                 )
             )
         )
@@ -217,7 +219,8 @@ private class KasmExecutionStack(
 }
 
 private class KasmStackFrame(
-    private val snapshot: DebugSnapshot
+    private val snapshot: DebugSnapshot,
+    private val fileResources: List<ProgramFile>
 ) : XStackFrame() {
     override fun getSourcePosition(): XSourcePosition? {
         val location = snapshot.nextLocation ?: return null
@@ -249,12 +252,24 @@ private class KasmStackFrame(
         children.add("C", KasmValue("flag", vm.carryFlag))
         children.add("O", KasmValue("flag", vm.overflowFlag))
 
+        addFilePointers(children, vm)
         addConstants(children, snapshot)
         addVariables(children, snapshot)
         addStackValues(children, vm)
         addMemoryValues(children, vm)
 
         node.addChildren(children, true)
+    }
+
+    private fun addFilePointers(children: XValueChildrenList, vm: VmSnapshot) {
+        fileResources.forEach { file ->
+            val position = vm.filePointers.getOrElse(file.id) { 0L }
+
+            children.add(
+                file.name,
+                KasmValue("file pointer", position)
+            )
+        }
     }
 
     private fun addConstants(children: XValueChildrenList, snapshot: DebugSnapshot) {

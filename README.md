@@ -12,6 +12,7 @@ support for writing KASM programs in IntelliJ-based IDEs.
 - Code completion for KASM instructions and registers
 - Instruction signature help based on the KASM language reference
 - Formatting with labels at column zero and instructions indented by one level
+- Label, constant, and file-source navigation from symbol operands
 - KASM run configurations and source-level debugger sessions
 
 ## Example
@@ -74,9 +75,9 @@ The plugin uses the headless KASM debug session API for source-level IntelliJ de
 3. Set breakpoints on executable KASM instruction lines.
 4. Start the configuration with the IntelliJ Debug action.
 
-The debug tool window stops at KASM source locations, supports resume and stepping, shows registers, flags,
-debugger-provided constants and data variables, stack values, and non-zero data memory, and prints KASM program output
-in the debug console.
+The debug tool window stops at KASM source locations, supports resume and stepping, shows registers, flags, file
+pointer positions, debugger-provided constants and data variables, stack values, and non-zero data memory, and prints
+KASM program output in the debug console.
 
 ## Publishing
 

@@ -22,7 +22,11 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
             "ADC",
             "ADDI",
             "JNZ",
+            "JC",
+            "JNC",
             "JGE",
+            "FREAD",
+            "FREWIND",
             "LOAD",
             "INCA",
             "NOP",
@@ -35,6 +39,7 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
             ".num64",
             ".string",
             ".incbin",
+            ".file",
             ".include",
             "R0",
             "A0"
@@ -63,6 +68,14 @@ class KasmCompletionContributorTest : BasePlatformTestCase() {
         val completions = completionResults()
 
         assertContainsElements(completions, ".num64")
+    }
+
+    fun testCompletesFileDirectivePrefixInKasmFile() {
+        myFixture.configureByText(KasmFileType, ".fi<caret>")
+
+        val completions = completionResults()
+
+        assertContainsElements(completions, ".file")
     }
 
     private fun completionResults(): List<String> =

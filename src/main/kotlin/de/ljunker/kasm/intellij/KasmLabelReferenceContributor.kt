@@ -37,27 +37,27 @@ internal fun kasmLabelReference(element: PsiElement): PsiReference? {
     }
 
     val labelName = element.text
-    if (!LABEL_NAME.matches(labelName) || isEquDefinition(element)) {
+    if (!SYMBOL_NAME.matches(labelName) || isSymbolDefinition(element)) {
         return null
     }
 
     return KasmLabelReference(element, labelName)
 }
 
-private fun isEquDefinition(element: PsiElement): Boolean {
+private fun isSymbolDefinition(element: PsiElement): Boolean {
     val fileText = element.containingFile.text
     val startOffset = element.textRange.startOffset
     val lineStart = fileText.lastIndexOf('\n', startOffset - 1)
         .let { if (it < 0) 0 else it + 1 }
     val prefix = fileText.substring(lineStart, startOffset)
 
-    return EQU_DEFINITION_PREFIX.matches(prefix)
+    return SYMBOL_DEFINITION_PREFIX.matches(prefix)
 }
 
-private val LABEL_NAME = Regex("""[A-Za-z_][A-Za-z0-9_]*""")
+private val SYMBOL_NAME = Regex("""[A-Za-z_][A-Za-z0-9_]*""")
 
-private val EQU_DEFINITION_PREFIX =
-    Regex("""^\s*(?:[A-Za-z_][A-Za-z0-9_]*:\s*)*\.equ\s+""", RegexOption.IGNORE_CASE)
+private val SYMBOL_DEFINITION_PREFIX =
+    Regex("""^\s*(?:[A-Za-z_][A-Za-z0-9_]*:\s*)*\.(?:equ|file)\s+""", RegexOption.IGNORE_CASE)
 
 private class KasmLabelReference(
     element: PsiElement,
@@ -71,7 +71,7 @@ private class KasmLabelReference(
         val file = element.containingFile ?: return null
         val virtualFile = file.virtualFile ?: return null
         val rootPath = Path.of(virtualFile.path)
-        val label = KasmSourceModel.collectLabels(rootPath, file.text)
+        val label = KasmSourceModel.collectSymbols(rootPath, file.text)
             .firstOrNull { it.name == labelName }
             ?: return null
 

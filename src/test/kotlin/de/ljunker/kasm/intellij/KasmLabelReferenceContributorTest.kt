@@ -62,12 +62,60 @@ class KasmLabelReferenceContributorTest : BasePlatformTestCase() {
         assertEquals("lib.kasm", target.containingFile.virtualFile.name)
     }
 
+    fun testIdentifierReferenceResolvesToConstantDefinition() {
+        myFixture.configureByText(
+            KasmFileType,
+            """
+            |.equ START_VALUE, 15
+            |    .byte START_<caret>VALUE
+            """.trimMargin()
+        )
+
+        val target = myFixture.file
+            .findReferenceAt(myFixture.caretOffset - 1)
+            ?.resolve()
+
+        assertNotNull(target)
+        assertEquals("START_VALUE", target!!.text)
+    }
+
+    fun testIdentifierReferenceResolvesToFileSourceDefinition() {
+        myFixture.configureByText(
+            KasmFileType,
+            """
+            |.file input, "input.txt"
+            |    FREAD R0, inp<caret>ut
+            """.trimMargin()
+        )
+
+        val target = myFixture.file
+            .findReferenceAt(myFixture.caretOffset - 1)
+            ?.resolve()
+
+        assertNotNull(target)
+        assertEquals("input", target!!.text)
+    }
+
     fun testLabelDefinitionIsNotReference() {
         myFixture.configureByText(
             KasmFileType,
             """
             |tar<caret>get:
             |    HALT
+            """.trimMargin()
+        )
+
+        val reference = myFixture.file.findReferenceAt(myFixture.caretOffset)
+
+        assertNull(reference)
+    }
+
+    fun testFileSourceDefinitionIsNotReference() {
+        myFixture.configureByText(
+            KasmFileType,
+            """
+            |.file inp<caret>ut, "input.txt"
+            |    FREAD R0, input
             """.trimMargin()
         )
 

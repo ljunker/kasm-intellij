@@ -58,6 +58,7 @@ enum class KasmOperandType(val displayName: String) {
     MEMORY_ADDRESS("memory-address"),
     INDEXED_MEMORY_ADDRESS("indexed-memory-address"),
     ADDRESS_REGISTER_MEMORY_ADDRESS("address-register-memory-address"),
+    FILE_SOURCE("file-source"),
     SYMBOL("symbol"),
     EXPRESSION("expr"),
     STRING("string")
@@ -138,6 +139,12 @@ object KasmLanguageReference {
         instruction("JNZ", KasmOperandType.REGISTER, KasmOperandType.JUMP_TARGET) {
             "Jump when the register value is non-zero."
         },
+        instruction("JC", KasmOperandType.JUMP_TARGET) {
+            "Jump when the Carry flag is set."
+        },
+        instruction("JNC", KasmOperandType.JUMP_TARGET) {
+            "Jump when the Carry flag is clear."
+        },
         instruction("JE", KasmOperandType.JUMP_TARGET) {
             "Jump when the Zero flag is set."
         },
@@ -173,6 +180,12 @@ object KasmLanguageReference {
         },
         instruction("STORE", KasmOperandType.ADDRESS_REGISTER_MEMORY_ADDRESS, KasmOperandType.REGISTER) {
             "Store a register value through an address-register pointer."
+        },
+        instruction("FREAD", KasmOperandType.REGISTER, KasmOperandType.FILE_SOURCE) {
+            "Read one byte from a runtime file stream into a register."
+        },
+        instruction("FREWIND", KasmOperandType.FILE_SOURCE) {
+            "Reset a runtime file stream to offset zero."
         },
         instruction("INCA", KasmOperandType.ADDRESS_REGISTER) {
             "Increment one address register with 16-bit wrapping."
@@ -263,6 +276,9 @@ object KasmLanguageReference {
         },
         directive(".incbin", KasmOperandType.STRING) {
             "Initialize one data-memory cell per byte read from a binary file."
+        },
+        directive(".file", KasmOperandType.SYMBOL, KasmOperandType.STRING) {
+            "Declare a runtime-readable file stream without initializing memory."
         },
         directive(".include", KasmOperandType.STRING) {
             "Expand another KASM source file at this point."

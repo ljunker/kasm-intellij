@@ -10,8 +10,12 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
             |.equ START_VALUE, (0x20 + 1)
             |value: .num64 655361234
             |.incbin "blob.bin"
+            |.file input, "input.txt"
             |.include "lib/u64-core.kasm"
             |loop:
+            |FREAD R0, input
+            |JC done
+            |FREWIND input
             |MOVA A0, 0x1200
             |PUSHA value
             |PEEKA A1, 2
@@ -21,6 +25,8 @@ class KasmSyntaxHighlighterTest : BasePlatformTestCase() {
             |message: .string "count; down"
             |PRINTC R0
             |JNZ R1, loop
+            |done:
+            |HALT
             """.trimMargin()
         )
 

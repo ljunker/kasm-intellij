@@ -43,7 +43,11 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
             KasmLanguageReference.formsFor("sbc").single().signature,
             KasmLanguageReference.formsFor("mul").single().signature,
             KasmLanguageReference.formsFor("neg").single().signature,
+            KasmLanguageReference.formsFor("jc").single().signature,
+            KasmLanguageReference.formsFor("jnc").single().signature,
             KasmLanguageReference.formsFor("jge").single().signature,
+            KasmLanguageReference.formsFor("fread").single().signature,
+            KasmLanguageReference.formsFor("frewind").single().signature,
             KasmLanguageReference.formsFor("nop").single().signature,
             KasmLanguageReference.formsFor("inca").single().signature,
             KasmLanguageReference.formsFor("pushi").single().signature,
@@ -79,7 +83,11 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
             "SBC register, register",
             "MUL register, register",
             "NEG register",
+            "JC jump-target",
+            "JNC jump-target",
             "JGE jump-target",
+            "FREAD register, file-source",
+            "FREWIND file-source",
             "NOP",
             "INCA address-register",
             "PUSHI byte-value",
@@ -130,12 +138,15 @@ class KasmParameterInfoHandlerTest : BasePlatformTestCase() {
             .map { it.signature }
         val incbinSignatures = KasmLanguageReference.directiveFormsFor(".incbin")
             .map { it.signature }
+        val fileSignatures = KasmLanguageReference.directiveFormsFor(".file")
+            .map { it.signature }
         val includeSignatures = KasmLanguageReference.directiveFormsFor(".include")
             .map { it.signature }
 
         assertSameElements(byteSignatures, ".byte expr, ...")
         assertSameElements(num64Signatures, ".num64 expr")
         assertSameElements(incbinSignatures, ".incbin string")
+        assertSameElements(fileSignatures, ".file symbol, string")
         assertSameElements(includeSignatures, ".include string")
     }
 }

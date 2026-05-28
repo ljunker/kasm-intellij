@@ -5,7 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.readText
 
-internal data class KasmLabelDefinitionLocation(
+internal data class KasmSymbolDefinitionLocation(
     val name: String,
     val filePath: String,
     val lineNumber: Int,
@@ -13,17 +13,17 @@ internal data class KasmLabelDefinitionLocation(
 )
 
 internal object KasmSourceModel {
-    fun collectLabels(
+    fun collectSymbols(
         rootPath: Path,
         rootSource: String
-    ): List<KasmLabelDefinitionLocation> {
-        val labels = mutableListOf<KasmLabelDefinitionLocation>()
+    ): List<KasmSymbolDefinitionLocation> {
+        val symbols = mutableListOf<KasmSymbolDefinitionLocation>()
         parseSource(
             source = rootSource,
             sourcePath = rootPath.toAbsolutePath().normalize(),
             includeStack = emptySet(),
-            onLabel = { name, filePath, lineNumber, startOffset ->
-                labels += KasmLabelDefinitionLocation(
+            onSymbol = { name, filePath, lineNumber, startOffset ->
+                symbols += KasmSymbolDefinitionLocation(
                     name = name,
                     filePath = filePath,
                     lineNumber = lineNumber,
@@ -31,14 +31,14 @@ internal object KasmSourceModel {
                 )
             }
         )
-        return labels
+        return symbols
     }
 
     private fun parseSource(
         source: String,
         sourcePath: Path,
         includeStack: Set<Path>,
-        onLabel: (String, String, Int, Int) -> Unit
+        onSymbol: (String, String, Int, Int) -> Unit
     ) {
         val normalizedSourcePath = sourcePath.toAbsolutePath().normalize()
         val sourceDirectory = normalizedSourcePath.parent ?: Path.of(".").toAbsolutePath().normalize()
@@ -56,7 +56,7 @@ internal object KasmSourceModel {
                 filePath = filePath,
                 sourceDirectory = sourceDirectory,
                 includeStack = includeStack + normalizedSourcePath,
-                onLabel = onLabel
+                onSymbol = onSymbol
             )
 
             if (lineEnd >= source.length) {
@@ -74,7 +74,7 @@ internal object KasmSourceModel {
         filePath: String,
         sourceDirectory: Path,
         includeStack: Set<Path>,
-        onLabel: (String, String, Int, Int) -> Unit
+        onSymbol: (String, String, Int, Int) -> Unit
     ) {
         val strippedLine = stripComment(rawLine)
         var statement = strippedLine.trim()
@@ -87,7 +87,7 @@ internal object KasmSourceModel {
                 val labelOffset = rawLine.indexOf(labelName, searchStart)
                     .takeIf { it >= 0 }
                     ?: searchStart
-                onLabel(labelName, filePath, lineNumber, lineStart + labelOffset)
+                onSymbol(labelName, filePath, lineNumber, lineStart + labelOffset)
 
                 statement = labelMatch.groupValues[2].trim()
                 searchStart = if (statement.isBlank()) {
@@ -108,8 +108,18 @@ internal object KasmSourceModel {
                     argument = parts.getOrNull(1).orEmpty(),
                     sourceDirectory = sourceDirectory,
                     includeStack = includeStack,
-                    onLabel = onLabel
+                    onSymbol = onSymbol
                 )
+            } else if (name == ".EQU" || name == ".FILE") {
+                parseArguments(parts.getOrNull(1).orEmpty())
+                    .firstOrNull()
+                    ?.takeIf(SYMBOL_NAME::matches)
+                    ?.let { symbolName ->
+                        val symbolOffset = rawLine.indexOf(symbolName, searchStart + parts[0].length)
+                            .takeIf { it >= 0 }
+                            ?: searchStart
+                        onSymbol(symbolName, filePath, lineNumber, lineStart + symbolOffset)
+                    }
             }
 
             statement = ""
@@ -120,7 +130,7 @@ internal object KasmSourceModel {
         argument: String,
         sourceDirectory: Path,
         includeStack: Set<Path>,
-        onLabel: (String, String, Int, Int) -> Unit
+        onSymbol: (String, String, Int, Int) -> Unit
     ) {
         val sourcePath = parseStringLiteral(argument) ?: return
         val path = resolvePath(sourcePath, sourceDirectory)
@@ -139,8 +149,48 @@ internal object KasmSourceModel {
             source = includedSource,
             sourcePath = stackPath,
             includeStack = includeStack,
-            onLabel = onLabel
+            onSymbol = onSymbol
         )
+    }
+
+    private fun parseArguments(value: String): List<String> {
+        val arguments = mutableListOf<String>()
+        val current = StringBuilder()
+        var inString = false
+        var escaped = false
+
+        value.forEach { char ->
+            when {
+                escaped -> {
+                    current.append(char)
+                    escaped = false
+                }
+
+                inString && char == '\\' -> {
+                    current.append(char)
+                    escaped = true
+                }
+
+                char == '"' -> {
+                    current.append(char)
+                    inString = !inString
+                }
+
+                char == ',' && !inString -> {
+                    arguments += current.toString().trim()
+                    current.clear()
+                }
+
+                else ->
+                    current.append(char)
+            }
+        }
+
+        current.toString().trim()
+            .takeIf(String::isNotBlank)
+            ?.let(arguments::add)
+
+        return arguments
     }
 
     private fun stripComment(line: String): String {
@@ -231,4 +281,7 @@ internal object KasmSourceModel {
 
     private val LABEL_REGEX =
         Regex("""^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$""")
+
+    private val SYMBOL_NAME =
+        Regex("""[A-Za-z_][A-Za-z0-9_]*""")
 }

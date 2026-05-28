@@ -43,8 +43,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Adds KASM 0.7.0 debug symbol support.
-            Shows debugger-provided constants and data variables in IntelliJ debug sessions.
+            Adds KASM 0.8.0 file stream language support.
+            Adds .file, FREAD, FREWIND, JC/JNC help and debugger file pointer display.
         """.trimIndent()
     }
 

@@ -4,6 +4,7 @@ import de.ljunker.kasm.Assembler
 import junit.framework.TestCase
 import java.math.BigInteger
 import java.nio.file.Files
+import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
 
 class KasmDebugSessionTest : TestCase() {
@@ -98,6 +99,25 @@ class KasmDebugSessionTest : TestCase() {
 
         assertEquals(BigInteger.valueOf(16), updatedSnapshot.symbols.variables.single().numericValue)
         assertEquals("  counter@0x0000 .num64=16", updatedSnapshot.symbolLines.last())
+    }
+
+    fun testSnapshotsExposeFilePointerPositions() {
+        val baseDirectory = Files.createTempDirectory("kasm-debug-session-file")
+        baseDirectory.resolve("input.bin").writeBytes(byteArrayOf(65, 66))
+        val debugProgram = Assembler(baseDirectory = baseDirectory).assembleWithDebugInfo(
+            """
+            |.file input, "input.bin"
+            |    FREAD R0, input
+            |    HALT
+            """.trimMargin()
+        )
+        val session = KasmDebugSession(debugProgram)
+
+        assertEquals(listOf(0L), session.snapshot().vm.filePointers)
+
+        session.stepInto()
+
+        assertEquals(listOf(1L), session.snapshot().vm.filePointers)
     }
 
     private fun debugFixture(source: String): DebugFixture {
